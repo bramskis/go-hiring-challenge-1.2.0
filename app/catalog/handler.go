@@ -31,34 +31,27 @@ func NewCatalogHandler(r *models.ProductsRepository) *CatalogHandler {
 func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	conditions := createGetCatalogConditions(r)
 
-	dbCatalog, err := h.repo.GetCatalogWithConditions(conditions)
+	catalog, err := h.repo.GetCatalogWithConditions(conditions)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	var totalProductsRetrieved int
-	for _, category := range dbCatalog {
-		totalProductsRetrieved += len(category.Products)
-	}
-
-	products := make([]ProductCondensed, totalProductsRetrieved)
-	for _, category := range dbCatalog {
-		categoryName := category.Name
-		for _, product := range category.Products {
-			products = append(products, ProductCondensed{
-				Code:     product.Code,
-				Price:    product.Price.InexactFloat64(),
-				Category: categoryName,
-			})
-		}
+	productsCondensed := make([]ProductCondensed, len(catalog.Products))
+	for _, product := range catalog.Products {
+		categoryName := catalog.CategoryDetails[product.CategoryID]
+		productsCondensed = append(productsCondensed, ProductCondensed{
+			Code:     product.Code,
+			Price:    product.Price.InexactFloat64(),
+			Category: categoryName,
+		})
 	}
 
 	// Return the products as a JSON response
 	w.Header().Set("Content-Type", "application/json")
 
 	response := Response{
-		Products: products,
+		Products: productsCondensed,
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
