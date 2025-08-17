@@ -21,3 +21,19 @@ func (r *ProductsRepository) GetAllProducts() ([]Product, error) {
 	}
 	return products, nil
 }
+
+func (r *ProductsRepository) GetAllCategoriesAndProducts() ([]Category, error) {
+	var categories []Category
+	if err := r.db.Preload("Products").Preload("Variants").Find(&categories).Error; err != nil {
+		return nil, err
+	}
+	return categories, nil
+}
+
+func (r *ProductsRepository) GetCategoriesByID(ids []uint) (map[uint]Category, error) {
+	var categories map[uint]Category
+	if err := r.db.Find(&categories, ids).Error; err != nil {
+		return nil, err
+	}
+	return categories, nil
+}
