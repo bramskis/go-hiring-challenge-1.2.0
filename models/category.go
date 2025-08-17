@@ -1,6 +1,6 @@
 package models
 
-// ProductCategory represents a category to which products could belong.
+// Category represents a category to which products could belong.
 // It includes a unique id, unique code, and a name.
 type Category struct {
 	ID       uint      `gorm:"primaryKey"`
