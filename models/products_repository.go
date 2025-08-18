@@ -94,7 +94,7 @@ func (r *ProductsRepository) GetCatalogWithConditions(conditions GetCatalogCondi
 	return &catalog, nil
 }
 
-func (r *ProductsRepository) GetCategories() ([]Category, error) {
+func (r *ProductsRepository) GetAllCategories() ([]Category, error) {
 	var categories []Category
 	if err := r.db.Find(&categories).Error; err != nil {
 		return nil, err
@@ -111,9 +111,25 @@ func (r *ProductsRepository) GetCategoriesByID(ids []uint) (map[uint]Category, e
 }
 
 func (r *ProductsRepository) GetCategoryByID(id uint) (*Category, error) {
-	var categories Category
-	if err := r.db.First(&categories, id).Error; err != nil {
+	var category Category
+	if err := r.db.First(&category, id).Error; err != nil {
 		return nil, err
 	}
-	return &categories, nil
+	return &category, nil
+}
+
+type CreateCategoryRequest struct {
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+func (r *ProductsRepository) CreateCategory(request CreateCategoryRequest) (*Category, error) {
+	category := Category{
+		Code: request.Code,
+		Name: request.Name,
+	}
+	if err := r.db.Create(&category).Error; err != nil {
+		return nil, err
+	}
+	return &category, nil
 }

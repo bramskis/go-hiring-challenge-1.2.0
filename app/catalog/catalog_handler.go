@@ -91,7 +91,7 @@ func NewCatalogHandler(r *models.ProductsRepository) *CatalogHandler {
 	}
 }
 
-func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
+func (h *CatalogHandler) HandleGetCatalog(w http.ResponseWriter, r *http.Request) {
 	conditions := createGetCatalogConditions(r)
 
 	catalog, err := h.repo.GetCatalogWithConditions(conditions)
