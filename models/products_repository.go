@@ -30,6 +30,14 @@ func (r *ProductsRepository) GetAllProducts() ([]Product, error) {
 	return products, nil
 }
 
+func (r *ProductsRepository) GetProductByID(id uint) (*Product, error) {
+	var product Product
+	if err := r.db.Preload("Variants").First(&product, id).Error; err != nil {
+		return nil, err
+	}
+	return &product, nil
+}
+
 func (r *ProductsRepository) getCategoriesMappingByID(ids []uint) (map[uint]string, error) {
 	var categories map[uint]Category
 	if err := r.db.Find(&categories, ids).Error; err != nil {
@@ -100,4 +108,12 @@ func (r *ProductsRepository) GetCategoriesByID(ids []uint) (map[uint]Category, e
 		return nil, err
 	}
 	return categories, nil
+}
+
+func (r *ProductsRepository) GetCategoryByID(id uint) (*Category, error) {
+	var categories Category
+	if err := r.db.First(&categories, id).Error; err != nil {
+		return nil, err
+	}
+	return &categories, nil
 }
