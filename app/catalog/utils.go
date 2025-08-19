@@ -9,6 +9,26 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// Condensed types containing only information to be returned from API
+
+type CategoryCondensed struct {
+	ID   uint   `json:"id"`
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+type ProductCondensed struct {
+	Code     string  `json:"code"`
+	Price    float64 `json:"price"`
+	Category string  `json:"category"`
+}
+
+type VariantCondensed struct {
+	Name  string  `json:"name"`
+	SKU   string  `json:"sku"`
+	Price float64 `json:"price"`
+}
+
 func createGetCatalogConditions(r *http.Request) models.GetCatalogConditions {
 	return models.GetCatalogConditions{
 		Offset:         getOffset(r),
