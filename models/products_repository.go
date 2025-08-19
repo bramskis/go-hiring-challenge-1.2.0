@@ -8,29 +8,29 @@ import (
 type GetCatalogConditions struct {
 	Offset         int
 	Limit          int
-	CategoryFilter *[]string
-	PriceLessThan  *decimal.Decimal
+	CategoryFilter []string
+	PriceLessThan  decimal.Decimal
 }
 
-type ProductsRepository struct {
+type ProductsRepository interface {
+	GetProductByCode(code string) (*Product, error)
+	GetCatalogWithConditions(conditions GetCatalogConditions) (*Catalog, error)
+	GetAllCategories() ([]Category, error)
+	GetCategoryByID(id uint) (*Category, error)
+	CreateCategory(request CreateCategoryRequest) (*Category, error)
+}
+
+type ProductsRepositoryWithDB struct {
 	db *gorm.DB
 }
 
-func NewProductsRepository(db *gorm.DB) *ProductsRepository {
-	return &ProductsRepository{
+func NewProductsRepository(db *gorm.DB) ProductsRepository {
+	return &ProductsRepositoryWithDB{
 		db: db,
 	}
 }
 
-func (r *ProductsRepository) GetAllProducts() ([]Product, error) {
-	var products []Product
-	if err := r.db.Preload("Variants").Find(&products).Error; err != nil {
-		return nil, err
-	}
-	return products, nil
-}
-
-func (r *ProductsRepository) GetProductByCode(code string) (*Product, error) {
+func (r *ProductsRepositoryWithDB) GetProductByCode(code string) (*Product, error) {
 	var product Product
 	if err := r.db.Preload("Variants").First(&product, "code = ?", code).Error; err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func (r *ProductsRepository) GetProductByCode(code string) (*Product, error) {
 	return &product, nil
 }
 
-func (r *ProductsRepository) getCategoriesMappingByID(ids []uint) (map[uint]string, error) {
+func (r *ProductsRepositoryWithDB) getCategoriesMappingByID(ids []uint) (map[uint]string, error) {
 	var categories []Category
 	if err := r.db.Find(&categories, ids).Error; err != nil {
 		return nil, err
@@ -58,16 +58,16 @@ type Catalog struct {
 	Total           int64
 }
 
-func (r *ProductsRepository) GetCatalogWithConditions(conditions GetCatalogConditions) (*Catalog, error) {
+func (r *ProductsRepositoryWithDB) GetCatalogWithConditions(conditions GetCatalogConditions) (*Catalog, error) {
 	catalog := Catalog{}
 
 	query := r.db.Model(&Product{})
 
-	if conditions.PriceLessThan != nil {
+	if conditions.PriceLessThan.GreaterThan(decimal.Zero) {
 		query = query.Where("products.price < ?", conditions.PriceLessThan.InexactFloat64())
 	}
-	if conditions.CategoryFilter != nil {
-		query = query.Joins("inner join categories on products.category_id = categories.id").Where("categories.name IN ?", *conditions.CategoryFilter)
+	if len(conditions.CategoryFilter) > 0 {
+		query = query.Joins("inner join categories on products.category_id = categories.id").Where("categories.name IN ?", conditions.CategoryFilter)
 	}
 
 	query.Count(&catalog.Total)
@@ -94,7 +94,7 @@ func (r *ProductsRepository) GetCatalogWithConditions(conditions GetCatalogCondi
 	return &catalog, nil
 }
 
-func (r *ProductsRepository) GetAllCategories() ([]Category, error) {
+func (r *ProductsRepositoryWithDB) GetAllCategories() ([]Category, error) {
 	var categories []Category
 	if err := r.db.Find(&categories).Error; err != nil {
 		return nil, err
@@ -102,15 +102,7 @@ func (r *ProductsRepository) GetAllCategories() ([]Category, error) {
 	return categories, nil
 }
 
-func (r *ProductsRepository) GetCategoriesByID(ids []uint) (map[uint]Category, error) {
-	var categories map[uint]Category
-	if err := r.db.Find(&categories, ids).Error; err != nil {
-		return nil, err
-	}
-	return categories, nil
-}
-
-func (r *ProductsRepository) GetCategoryByID(id uint) (*Category, error) {
+func (r *ProductsRepositoryWithDB) GetCategoryByID(id uint) (*Category, error) {
 	var category Category
 	if err := r.db.First(&category, id).Error; err != nil {
 		return nil, err
@@ -123,7 +115,7 @@ type CreateCategoryRequest struct {
 	Name string `json:"name"`
 }
 
-func (r *ProductsRepository) CreateCategory(request CreateCategoryRequest) (*Category, error) {
+func (r *ProductsRepositoryWithDB) CreateCategory(request CreateCategoryRequest) (*Category, error) {
 	category := Category{
 		Code: request.Code,
 		Name: request.Name,

@@ -66,11 +66,11 @@ func getLimit(r *http.Request) int {
 	return limit
 }
 
-func getCategoryFilter(r *http.Request) *[]string {
-	var categories []string
+func getCategoryFilter(r *http.Request) []string {
+	categories := []string{}
 	categoriesStr := r.URL.Query().Get("category")
 	if categoriesStr == "" {
-		return nil
+		return categories
 	}
 
 	if strings.Contains(categoriesStr, ",") {
@@ -78,18 +78,18 @@ func getCategoryFilter(r *http.Request) *[]string {
 	} else {
 		categories = []string{categoriesStr}
 	}
-	return &categories
+	return categories
 }
 
-func getPriceLessThanFilter(r *http.Request) *decimal.Decimal {
+func getPriceLessThanFilter(r *http.Request) decimal.Decimal {
 	priceLessThanStr := r.URL.Query().Get("priceLessThan")
 	if priceLessThanStr == "" {
-		return nil
+		return decimal.Zero
 	}
 	priceLessThan, err := decimal.NewFromString(priceLessThanStr)
 	if err != nil {
-		return nil
+		return decimal.Zero
 	}
 
-	return &priceLessThan
+	return priceLessThan
 }

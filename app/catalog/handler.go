@@ -10,10 +10,10 @@ import (
 )
 
 type CatalogHandler struct {
-	repo *models.ProductsRepository
+	repo models.ProductsRepository
 }
 
-func NewCatalogHandler(r *models.ProductsRepository) *CatalogHandler {
+func NewCatalogHandler(r models.ProductsRepository) *CatalogHandler {
 	return &CatalogHandler{
 		repo: r,
 	}
@@ -131,8 +131,8 @@ type PostCategoryResponse struct {
 func (h *CatalogHandler) HandlePostCategory(w http.ResponseWriter, r *http.Request) {
 	createCategoryRequest := models.CreateCategoryRequest{}
 	err := json.NewDecoder(r.Body).Decode(&createCategoryRequest)
-	if err != nil {
-		api.ErrorResponse(w, http.StatusBadRequest, err.Error())
+	if err != nil || createCategoryRequest.Code == "" || createCategoryRequest.Name == "" {
+		api.ErrorResponse(w, http.StatusBadRequest, "Request does not match required fields")
 		return
 	}
 
