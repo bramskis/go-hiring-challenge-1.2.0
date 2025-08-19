@@ -21,7 +21,7 @@ func NewCatalogHandler(r *models.ProductsRepository) *CatalogHandler {
 
 type GetCatalogResponse struct {
 	Products      []ProductCondensed `json:"products"`
-	TotalProducts int                `json:"totalProducts"`
+	TotalProducts int64              `json:"totalProducts"`
 }
 
 func (h *CatalogHandler) HandleGetCatalog(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +48,8 @@ func (h *CatalogHandler) HandleGetCatalog(w http.ResponseWriter, r *http.Request
 	}
 
 	api.OKResponse(w, GetCatalogResponse{
-		Products: productsCondensed,
+		Products:      productsCondensed,
+		TotalProducts: catalog.Total,
 	})
 }
 

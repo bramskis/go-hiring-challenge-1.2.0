@@ -61,13 +61,13 @@ type Catalog struct {
 func (r *ProductsRepository) GetCatalogWithConditions(conditions GetCatalogConditions) (*Catalog, error) {
 	catalog := Catalog{}
 
-	query := r.db.Model(&Product{}).Joins("inner join categories on products.category_id = categories.id")
+	query := r.db.Model(&Product{})
 
 	if conditions.PriceLessThan != nil {
-		query = query.Where("products.price < ?", *conditions.PriceLessThan)
+		query = query.Where("products.price < ?", conditions.PriceLessThan.InexactFloat64())
 	}
 	if conditions.CategoryFilter != nil {
-		query = query.Where("categories.name IN ?", *conditions.CategoryFilter)
+		query = query.Joins("inner join categories on products.category_id = categories.id").Where("categories.name IN ?", *conditions.CategoryFilter)
 	}
 
 	query.Count(&catalog.Total)
