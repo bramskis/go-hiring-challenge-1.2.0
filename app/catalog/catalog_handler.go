@@ -3,7 +3,6 @@ package catalog
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/mytheresa/go-hiring-challenge/models"
@@ -21,20 +20,15 @@ type ProductCondensed struct {
 }
 
 type VariantCondensed struct {
-	SKU      string  `json:"sku"`
-	Price    float64 `json:"price"`
-	Category string  `json:"category"`
+	Name  string  `json:"name"`
+	SKU   string  `json:"sku"`
+	Price float64 `json:"price"`
 }
 
 func (h *CatalogHandler) HandleGetCode(w http.ResponseWriter, r *http.Request) {
-	codeStr := strings.TrimPrefix(r.URL.Path, "/catalog/")
-	code, err := strconv.Atoi(codeStr)
-	if err != nil || code < 1 {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	code := strings.TrimPrefix(r.URL.Path, "/catalog/")
 
-	product, err := h.repo.GetProductByID(uint(code))
+	product, err := h.repo.GetProductByCode(code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -46,16 +40,16 @@ func (h *CatalogHandler) HandleGetCode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	variantsCondensed := make([]VariantCondensed, len(product.Variants))
-	for _, variant := range product.Variants {
+	for i, variant := range product.Variants {
 		variantPrice := product.Price.InexactFloat64()
 		if variant.Price.InexactFloat64() > 0 {
 			variantPrice = variant.Price.InexactFloat64()
 		}
-		variantsCondensed = append(variantsCondensed, VariantCondensed{
-			SKU:      variant.SKU,
-			Price:    variantPrice,
-			Category: category.Name,
-		})
+		variantsCondensed[i] = VariantCondensed{
+			Name:  variant.Name,
+			SKU:   variant.SKU,
+			Price: variantPrice,
+		}
 	}
 
 	response := CodeResponse{
@@ -101,13 +95,13 @@ func (h *CatalogHandler) HandleGetCatalog(w http.ResponseWriter, r *http.Request
 	}
 
 	productsCondensed := make([]ProductCondensed, len(catalog.Products))
-	for _, product := range catalog.Products {
+	for i, product := range catalog.Products {
 		categoryName := catalog.CategoryDetails[product.CategoryID]
-		productsCondensed = append(productsCondensed, ProductCondensed{
+		productsCondensed[i] = ProductCondensed{
 			Code:     product.Code,
 			Price:    product.Price.InexactFloat64(),
 			Category: categoryName,
-		})
+		}
 	}
 
 	// Return the products as a JSON response

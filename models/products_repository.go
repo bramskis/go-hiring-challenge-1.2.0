@@ -30,16 +30,16 @@ func (r *ProductsRepository) GetAllProducts() ([]Product, error) {
 	return products, nil
 }
 
-func (r *ProductsRepository) GetProductByID(id uint) (*Product, error) {
+func (r *ProductsRepository) GetProductByCode(code string) (*Product, error) {
 	var product Product
-	if err := r.db.Preload("Variants").First(&product, id).Error; err != nil {
+	if err := r.db.Preload("Variants").First(&product, "code = ?", code).Error; err != nil {
 		return nil, err
 	}
 	return &product, nil
 }
 
 func (r *ProductsRepository) getCategoriesMappingByID(ids []uint) (map[uint]string, error) {
-	var categories map[uint]Category
+	var categories []Category
 	if err := r.db.Find(&categories, ids).Error; err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ type Catalog struct {
 func (r *ProductsRepository) GetCatalogWithConditions(conditions GetCatalogConditions) (*Catalog, error) {
 	catalog := Catalog{}
 
-	query := r.db.Model(&Product{}).Joins("inner join on products.category_id = categories.id")
+	query := r.db.Model(&Product{}).Joins("inner join categories on products.category_id = categories.id")
 
 	if conditions.PriceLessThan != nil {
 		query = query.Where("products.price < ?", *conditions.PriceLessThan)

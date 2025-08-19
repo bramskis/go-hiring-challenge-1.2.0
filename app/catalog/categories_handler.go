@@ -25,12 +25,12 @@ func (h *CatalogHandler) HandleGetCategories(w http.ResponseWriter, r *http.Requ
 	}
 
 	categoriesCondensed := make([]CategoryCondensed, len(categories))
-	for _, category := range categories {
-		categoriesCondensed = append(categoriesCondensed, CategoryCondensed{
+	for i, category := range categories {
+		categoriesCondensed[i] = CategoryCondensed{
 			ID:   category.ID,
 			Code: category.Code,
 			Name: category.Name,
-		})
+		}
 	}
 
 	response := GetCategoriesResponse{
